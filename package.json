@@ -1,0 +1,9 @@
+{
+  "type":"module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.6.0"
+  }
+}
