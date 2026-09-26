@@ -24,6 +24,7 @@ server.tool(
   }
 );
 
-const transport = new StreamableHTTPServerTransport({port:3000});
+const transport = new StreamableHTTPServerTransport({ port: process.env.PORT || 3000 });
+
 await server.connect(transport);
 console.log("MCP Streamable HTTP server running");
