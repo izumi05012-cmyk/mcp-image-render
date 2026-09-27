@@ -6,25 +6,7 @@ const server = new Server(
   { capabilities: { tools: {} } }
 );
 
-// ✅新版SDK正确注册工具方式，不再使用server.tool
-server.setRequestHandler(
-  "tools/call",
-  async (request) => {
-    if (request.params.name === "render_image") {
-      const { imageUrl, width = 160, borderRadius = 12 } = request.params.arguments;
-      return {
-        content: [
-          {
-            type: "image",
-            image_url: { url: imageUrl }
-          }
-        ]
-      };
-    }
-    throw new Error("unknown tool");
-  }
-);
-
+// 工具列表
 server.setRequestHandler("tools/list", async () => {
   return {
     tools: [
@@ -32,17 +14,42 @@ server.setRequestHandler("tools/list", async () => {
         name: "render_image",
         description: "渲染网络图片，用于RP剧情对话",
         inputSchema: {
-          type: "object",
-          properties: {
-            imageUrl: { type: "string", description: "jsdelivr图片CDN链接" },
-            width: { type: "number", description: "图片展示宽度" },
-            borderRadius: { type: "number", description: "图片圆角大小" }
+          "type": "object",
+          "properties": {
+            "imageUrl": {
+              "type": "string",
+              "description": "jsdelivr图片CDN链接"
+            },
+            "width": {
+              "type": "number",
+              "description": "图片展示宽度"
+            },
+            "borderRadius": {
+              "type": "number",
+              "description": "图片圆角大小"
+            }
           },
-          required: ["imageUrl"]
+          "required": ["imageUrl"]
         }
       }
     ]
   };
+});
+
+// 调用工具
+server.setRequestHandler("tools/call", async (request) => {
+  if (request.params.name === "render_image") {
+    const { imageUrl, width = 160, borderRadius = 12 } = request.params.arguments;
+    return {
+      content: [
+        {
+          type: "image",
+          image_url: { url: imageUrl }
+        }
+      ]
+    };
+  }
+  throw new Error("unknown tool");
 });
 
 const transport = new StreamableHTTPServerTransport({
@@ -50,4 +57,4 @@ const transport = new StreamableHTTPServerTransport({
 });
 
 await server.connect(transport);
-console.log(`MCP image server running`);
+console.log(`✅ MCP image server running`);
