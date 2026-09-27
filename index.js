@@ -9,25 +9,40 @@ const server = new McpServer({
 
 server.registerTool(
   "render_image",
-  "渲染网络图片，用于RP剧情对话",
+  "加载网络表情包图片并在对话中显示",
   {
-    imageUrl: { type: "string", description: "jsdelivr图片CDN链接" },
+    imageUrl: { type: "string", description: "表情包图片CDN链接" },
     width: { type: "number", description: "图片展示宽度" },
     borderRadius: { type: "number", description: "图片圆角大小" }
   },
   async ({ imageUrl, width = 160, borderRadius = 12 }) => {
-    return {
-      content: [{ type: "image", image_url: { url: imageUrl } }]
-    };
+    try {
+      const resp = await fetch(imageUrl);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const buf = Buffer.from(await resp.arrayBuffer());
+      const mimeType = resp.headers.get("content-type") || "image/png";
+      return {
+        content: [{ type: "image", data: buf.toString("base64"), mimeType }]
+      };
+    } catch (e) {
+      return {
+        content: [{ type: "text", text: `图片加载失败: ${e.message}` }]
+      };
+    }
   }
 );
 
 const app = express();
-const transport = new StreamableHTTPServerTransport({});
+app.use(express.json());
+
+// 有状态模式：transport可跨请求复用，每个客户端分配session
+const transport = new StreamableHTTPServerTransport({
+  sessionIdGenerator: () => crypto.randomUUID()
+});
+await server.connect(transport);
 
 app.post("/", async (req, res) => {
-  await server.connect(transport);
-  await transport.handleRequest(req, res);
+  await transport.handleRequest(req, res, req.body);
 });
 
 app.get("/", (req, res) => {
