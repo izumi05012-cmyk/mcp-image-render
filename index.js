@@ -1,38 +1,34 @@
-import express from "express";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 
-const server = new McpServer({
-  name: "image-render",
-  version: "1.0.0"
-});
+const server = new Server(
+  { name: "image-render", version: "1.0.0" },
+  { capabilities: { tools: {} } }
+);
 
-server.registerTool(
+server.tool(
   "render_image",
   "渲染网络图片，用于RP剧情对话",
   {
-    imageUrl: { type: "string", description: "jsdelivr图片CDN链接" },
-    width: { type: "number", description: "图片展示宽度" },
-    borderRadius: { type: "number", description: "图片圆角大小" }
+    imageUrl: {type:"string",description:"jsdelivr图片CDN链接"},
+    width: {type:"number",description:"图片展示宽度"},
+    borderRadius: {type:"number",description:"图片圆角大小"}
   },
-  async ({ imageUrl, width = 160, borderRadius = 12 }) => {
+  async ({imageUrl,width=160,borderRadius=12})=>{
     return {
-      content: [{ type: "image", image_url: { url: imageUrl } }]
-    };
+      content: [
+        {
+          type:"image",
+          image_url:{url:imageUrl}
+        }
+      ]
+    }
   }
 );
 
-const app = express();
-app.use(express.json({ limit: "10mb" }));
-
-const transport = new StreamableHTTPServerTransport({});
-
-// MCP协议统一走 /mcp 这个接口
-app.post("/mcp", async (req, res) => {
-  await server.connect(transport);
-  await transport.handleRequest(req, res);
+const transport = new StreamableHTTPServerTransport({
+  server,
+  enableAuth: false
 });
 
-app.listen(process.env.PORT || 3000, "0.0.0.0", () => {
-  console.log("✅ MCP image server running");
-});
+transport.start();
