@@ -23,17 +23,13 @@ server.registerTool(
 );
 
 const app = express();
-app.use(express.json());
-
 const transport = new StreamableHTTPServerTransport({});
 
-// MCP请求入口：根路径 /
 app.post("/", async (req, res) => {
   await server.connect(transport);
   await transport.handleRequest(req, res);
 });
 
-// 健康检查：浏览器直接访问能看到提示
 app.get("/", (req, res) => {
   res.send("MCP image server is running");
 });
