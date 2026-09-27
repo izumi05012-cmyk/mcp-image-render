@@ -1,45 +1,31 @@
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 
-const server = new Server(
-  { name: "image-render", version: "1.0.0" },
-  { capabilities: { tools: {} } }
-);
-
-// 工具列表
-server.setRequestHandler("tools/list", async () => {
-  return {
-    tools: [
-      {
-        name: "render_image",
-        description: "渲染网络图片，用于RP剧情对话",
-        inputSchema: {
-          "type": "object",
-          "properties": {
-            "imageUrl": {
-              "type": "string",
-              "description": "jsdelivr图片CDN链接"
-            },
-            "width": {
-              "type": "number",
-              "description": "图片展示宽度"
-            },
-            "borderRadius": {
-              "type": "number",
-              "description": "图片圆角大小"
-            }
-          },
-          "required": ["imageUrl"]
-        }
-      }
-    ]
-  };
+// 高层McpServer，1.0.0推荐，直接.registerTool
+const server = new McpServer({
+  name: "image-render",
+  version: "1.0.0"
 });
 
-// 调用工具
-server.setRequestHandler("tools/call", async (request) => {
-  if (request.params.name === "render_image") {
-    const { imageUrl, width = 160, borderRadius = 12 } = request.params.arguments;
+// 注册图片渲染工具，新版直接用registerTool
+server.registerTool(
+  "render_image",
+  "渲染网络图片，用于RP剧情对话",
+  {
+    imageUrl: {
+      type: "string",
+      description: "jsdelivr图片CDN链接"
+    },
+    width: {
+      type: "number",
+      description: "图片展示宽度"
+    },
+    borderRadius: {
+      type: "number",
+      description: "图片圆角大小"
+    }
+  },
+  async ({ imageUrl, width = 160, borderRadius = 12 }) => {
     return {
       content: [
         {
@@ -49,8 +35,7 @@ server.setRequestHandler("tools/call", async (request) => {
       ]
     };
   }
-  throw new Error("unknown tool");
-});
+);
 
 const transport = new StreamableHTTPServerTransport({
   port: process.env.PORT || 3000
