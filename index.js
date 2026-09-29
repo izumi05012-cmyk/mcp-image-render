@@ -222,7 +222,7 @@ function createServer() {
           if (!hasId && !hasNameArtist) {
             return { content: [{ type: "text", text: "需要提供 songId,或者至少提供 name(歌名)" }], isError: true };
           }
-          const song = { id: hasId ? String(args.songId) : "", name: args.name || "", artist: args.artist || "" };
+          const song = { songId: hasId ? String(args.songId) : "", title: args.name || "", artist: args.artist || "" };
           const endpoint = action === "play_next" ? "/queue/next" : action === "play_now" ? "/queue/now" : "/queue/append";
           const body = action === "queue_add" ? { songs: [song] } : { song };
           result = await musicFetch(endpoint, { method: "POST", body: JSON.stringify(body) });
